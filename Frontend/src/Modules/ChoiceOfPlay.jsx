@@ -1,4 +1,4 @@
-
+import { myPlayer, startMatchmaking, insertCoin } from 'playroomkit';
 export default function(){
     const handlePlay = async () => {
         let hash = ''
