@@ -5,9 +5,11 @@ export default function(){
     const navigate = useNavigate();
 
     const handleSoloPlay = () => {
+        localStorage.setItem('gameMode', 'solo');
         navigate('/game'); // Navigate to the game environment
     }
     const handleMultiplayerPlay = async () => {
+        localStorage.setItem('gameMode', 'multiplayer');
         let hash = ''
         await startMatchmaking(); // Start matchmaking to find a game
         hash = window.location.hash

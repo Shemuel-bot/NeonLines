@@ -330,8 +330,13 @@ export default function GameEnv() {
     return (
 
         <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
-            <Countdown count={5} engine={engineRef.current}/>
-            
+            {
+                localStorage.getItem('gameMode') === 'solo' ? (
+                    <h1 style={{marginTop: '10%'}} className="clock">Solo Mode</h1>
+                ) : (
+                    <Countdown count={5} engine={engineRef.current}/>
+                )
+            }
             <EndGameManager />
             {/* Inline CSS for the shockwave animation */}
             <style>{`
