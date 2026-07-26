@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { myPlayer, startMatchmaking, insertCoin } from 'playroomkit';
 export default function(){
     const navigate = useNavigate();
-    const handlePlay = async () => {
+
+    const handleSoloPlay = () => {
+        navigate('/game'); // Navigate to the game environment
+    }
+    const handleMultiplayerPlay = async () => {
         let hash = ''
         await startMatchmaking(); // Start matchmaking to find a game
         hash = window.location.hash
@@ -12,8 +16,8 @@ export default function(){
 
     return (
         <section className="choice-of-play">
-            <button>Solo</button>
-            <button onClick={handlePlay}>Multiplayer</button>
+            <button onClick={handleSoloPlay}>Solo</button>
+            <button onClick={handleMultiplayerPlay}>Multiplayer</button>
         </section>
     );
 }
