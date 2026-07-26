@@ -1,19 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { myPlayer, startMatchmaking, insertCoin } from 'playroomkit';
+import { myPlayer, startMatchmaking, insertCoin, getState, setState } from 'playroomkit';
 export default function(){
     const navigate = useNavigate();
 
     const handleSoloPlay = () => {
         localStorage.setItem('gameMode', 'solo');
-        navigate('/game'); // Navigate to the game environment
+        setState('clock', 0); 
+        navigate('/game');
     }
     const handleMultiplayerPlay = async () => {
         localStorage.setItem('gameMode', 'multiplayer');
         let hash = ''
-        await startMatchmaking(); // Start matchmaking to find a game
+        await startMatchmaking(); 
         hash = window.location.hash
-        navigate('/game'+hash); // Navigate to the game environment
+        navigate('/game'+hash); 
     }
 
     return (
