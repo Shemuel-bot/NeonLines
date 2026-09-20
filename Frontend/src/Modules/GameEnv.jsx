@@ -11,10 +11,12 @@ import Countdown from '../Components/Countdown';
 
 import bounce from '../assets/SFX/bounce.mp3'
 
+const gunIconUrl = 'https://img.icons8.com/?size=100&id=UJ77tSjc1Hhv&format=png&color=000000';
 
 
 export default function GameEnv() {
     const players = usePlayersList();
+    const [turretAngle] = usePlayerState(myPlayer(), 'turretAngle');
     const [play] = useSound(bounce)
     const bounceSound = new Audio(bounce)
 
@@ -180,6 +182,10 @@ export default function GameEnv() {
                     const dx = targetBody.position.x - projBody.position.x;
                     const dy = targetBody.position.y - projBody.position.y;
                     const angle = Math.atan2(dy, dx);
+
+                    playersRef.current.forEach((player) => {
+                        player.setState('turretAngle', angle);
+                    });
                     
                     const speed = 12; 
                     Body.setVelocity(projBody, { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed });
@@ -350,14 +356,21 @@ export default function GameEnv() {
             <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '20px', backgroundColor: 'red', boxShadow: '0 0 10px red, 0 0 20px red' }} />
             <div style={{ position: 'absolute', top: 0, right: 0, width: '20px', height: '98%', backgroundColor: 'red', boxShadow: '0 0 10px red, 0 0 20px red' }} />
             
-            <div style={{ 
-                position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', 
-                width: '80px', height: '80px', backgroundColor: '#333', border: '2px solid orange', 
-                color: 'orange', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                fontWeight: 'bold', zIndex: 10, borderRadius: '10px', boxShadow: '0 0 15px orange' 
-            }}>
-                TURRET
-            </div>
+            <img
+                src={gunIconUrl}
+                alt="Turret"
+                style={{
+                    position: 'absolute',
+                    top: '50px',
+                    left: '50%',
+                    width: '80px',
+                    height: '80px',
+                    objectFit: 'contain',
+                    zIndex: 10,
+                    transform: `translate(-50%, -50%) rotate(${turretAngle || 0}rad)`,
+                    transformOrigin: 'center'
+                }}
+            />
 
             {players.map((player) => (
                 <React.Fragment key={player.id}>
