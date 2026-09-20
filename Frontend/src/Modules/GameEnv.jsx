@@ -10,6 +10,7 @@ import { ExplosionsRenderer, ProjectilesRenderer } from '../Components/explosive
 import Countdown from '../Components/Countdown';
 
 import bounce from '../assets/SFX/bounce.mp3'
+import bloop from '../assets/SFX/bloop.mp3'
 
 const gunIconUrl = 'https://img.icons8.com/?size=100&id=UJ77tSjc1Hhv&format=png&color=000000';
 
@@ -17,7 +18,9 @@ const gunIconUrl = 'https://img.icons8.com/?size=100&id=UJ77tSjc1Hhv&format=png&
 export default function GameEnv() {
     const players = usePlayersList();
     const [turretAngle] = usePlayerState(myPlayer(), 'turretAngle');
+    const [isAlive] = usePlayerState(myPlayer(), 'alive');
     const [play] = useSound(bounce)
+    const [playDeath] = useSound(bloop)
     const bounceSound = new Audio(bounce)
 
     const playersRef = useRef(players); 
@@ -29,8 +32,16 @@ export default function GameEnv() {
     const explosionsRef = useRef([]); // NEW: Tracks explosion coordinates
     const lastShotTimeRef = useRef(Date.now());
     const lastSyncTimeRef = useRef(Date.now()); 
+    const wasAliveRef = useRef(isAlive);
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (wasAliveRef.current === true && isAlive === false) {
+            playDeath();
+        }
+        wasAliveRef.current = isAlive;
+    }, [isAlive, playDeath]);
 
     useEffect(() => {
         
