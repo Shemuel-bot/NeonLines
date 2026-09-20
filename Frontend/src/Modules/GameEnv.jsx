@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Engine, Runner, Bodies, Composite, Events, Body } from 'matter-js'; 
-import { usePlayersList, isHost, transferHost, myPlayer, usePlayerState, useMultiplayerState, getState, startMatchmaking } from 'playroomkit';
+import { usePlayersList, isHost, transferHost, myPlayer, usePlayerState, useMultiplayerState, getState } from 'playroomkit';
 import useSound from 'use-sound'
 
 import Player from '../Components/Player';
@@ -352,6 +352,8 @@ export default function GameEnv() {
     }, [players, gameResetKey]);
 
     const handleNewMatch = async () => {
+        const isMultiplayer = localStorage.getItem('gameMode') !== 'solo';
+
         resetGame({
             engineRef,
             runnerRef,
@@ -365,10 +367,13 @@ export default function GameEnv() {
             wasAliveRef,
             setAliveTime,
             setGameResetKey,
+            resetPlayerState: !isMultiplayer,
         });
 
-        if (localStorage.getItem('gameMode') !== 'solo') {
-            await startMatchmaking();
+        if (isMultiplayer) {
+            myPlayer().leaveRoom();
+            navigate('/choice-of-play', { state: { autoMatch: true } });
+            return;
         }
     };
 

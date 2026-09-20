@@ -14,9 +14,8 @@ export default function resetGame({
     wasAliveRef,
     setAliveTime,
     setGameResetKey,
+    resetPlayerState = true,
 }) {
-    const player = myPlayer();
-
     if (runnerRef.current) {
         Runner.stop(runnerRef.current);
     }
@@ -37,16 +36,19 @@ export default function resetGame({
     aliveStartedAtRef.current = null;
     wasAliveRef.current = true;
 
-    player.setState('alive', true);
-    player.setState('ink', 50);
-    player.setState('clearBrush', false);
-    player.setState('clearOldBrush', false);
-    player.setState('visualBrushes', []);
-    player.setState('activeProjectiles', []);
-    player.setState('explosions', []);
-    player.setState('pos', null);
-    player.setState('spawnBrush', null);
-    player.setState('lastProcessedBrushId', null);
+    if (resetPlayerState) {
+        const player = myPlayer();
+        player.setState('alive', true);
+        player.setState('ink', 50);
+        player.setState('clearBrush', false);
+        player.setState('clearOldBrush', false);
+        player.setState('visualBrushes', []);
+        player.setState('activeProjectiles', []);
+        player.setState('explosions', []);
+        player.setState('pos', null);
+        player.setState('spawnBrush', null);
+        player.setState('lastProcessedBrushId', null);
+    }
 
     setAliveTime(0);
     setGameResetKey((currentKey) => currentKey + 1);
