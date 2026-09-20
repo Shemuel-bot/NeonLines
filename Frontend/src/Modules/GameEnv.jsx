@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Engine, Runner, Bodies, Composite, Events, Body } from 'matter-js'; 
-import { usePlayersList, isHost, transferHost, myPlayer, usePlayerState, useMultiplayerState, getState } from 'playroomkit';
+import { usePlayersList, isHost, transferHost, myPlayer, usePlayerState, useMultiplayerState, getState, startMatchmaking } from 'playroomkit';
 import useSound from 'use-sound'
 
 import Player from '../Components/Player';
 import EndGameManager from '../Components/EndGameManager';
 import { ExplosionsRenderer, ProjectilesRenderer } from '../Components/explosiveBall';
 import Countdown from '../Components/Countdown';
+import resetGame from './resetGame';
 
 import bounce from '../assets/SFX/bounce.mp3'
 import bloop from '../assets/SFX/bloop.mp3'
@@ -24,9 +25,11 @@ export default function GameEnv() {
     const [playDeath] = useSound(bloop)
     const bounceSound = new Audio(bounce)
     const [aliveTime, setAliveTime] = useState(0)
+    const [gameResetKey, setGameResetKey] = useState(0)
 
     const playersRef = useRef(players); 
     const engineRef = useRef(null);
+    const runnerRef = useRef(null);
     const bodiesRef = useRef({}); 
     const brushBodiesRef = useRef({});
     
@@ -114,8 +117,8 @@ export default function GameEnv() {
         ];
         Composite.add(engine.world, walls);
 
-        const runner = Runner.create();
-        Runner.run(runner, engine);
+        runnerRef.current = Runner.create();
+        Runner.run(runnerRef.current, engine);
 
         Events.on(engine, 'collisionStart', (event) => {
             const pairs = event.pairs;
@@ -346,7 +349,29 @@ export default function GameEnv() {
                 }
             }
         });
-    }, [players]);
+    }, [players, gameResetKey]);
+
+    const handleNewMatch = async () => {
+        if (localStorage.getItem('gameMode') !== 'solo') {
+            myPlayer().leaveRoom();
+            await startMatchmaking();
+        }
+
+        resetGame({
+            engineRef,
+            runnerRef,
+            bodiesRef,
+            brushBodiesRef,
+            projectilesRef,
+            explosionsRef,
+            lastShotTimeRef,
+            lastSyncTimeRef,
+            aliveStartedAtRef,
+            wasAliveRef,
+            setAliveTime,
+            setGameResetKey,
+        });
+    };
 
     useEffect(() => {
         const wasAlreadyInRoom = sessionStorage.getItem('inGameEnv');
@@ -378,7 +403,7 @@ export default function GameEnv() {
                     <Countdown count={5} engine={engineRef.current}/>
                 )
             }
-            <EndGameManager />
+            <EndGameManager key={gameResetKey} onNewMatch={handleNewMatch} />
             {isAlive !== false && (
                 <div style={{
                     position: 'absolute',

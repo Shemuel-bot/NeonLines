@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { myPlayer, startMatchmaking } from 'playroomkit';
+import { myPlayer } from 'playroomkit';
 import '../css/EndGameScreen.css';
 
-export default function EndGameScreen({ players, aliveTime }) {
+export default function EndGameScreen({ players, aliveTime, onNewMatch }) {
     const navigate = useNavigate();
     const me = myPlayer();
     
@@ -21,18 +21,10 @@ export default function EndGameScreen({ players, aliveTime }) {
     const seconds = (secondsAlive % 60).toString().padStart(2, '0');
 
     const handleNewMatch = async () => {
-        if (localStorage.getItem('gameMode') === 'solo') {
-            window.location.reload();
-            return;
-        }
-
-        me.leaveRoom();
-        await startMatchmaking(); // Start matchmaking again to find a new game
-        window.location.reload(); // Force reload to reset game state
+        await onNewMatch();
     }
 
     const handleQuit = () => {
-        me.leaveRoom();
         navigate('/');
     }
 

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { myPlayer, usePlayerState, usePlayersList, useMultiplayerState } from 'playroomkit';
 import EndGameScreen from './EndGameScreen';
 
-export default function EndGameManager() {
+export default function EndGameManager({ onNewMatch }) {
     // PASSING 'true' IS CRITICAL: It forces a re-render when ANY player's state changes.
     const players = usePlayersList(true); 
     const [clock] = useMultiplayerState('clock', 5);
@@ -41,5 +41,5 @@ export default function EndGameManager() {
 
     if (!isGameOver) return null;
 
-    return <EndGameScreen players={players} aliveTime={aliveTime} />;
+    return <EndGameScreen players={players} aliveTime={aliveTime} onNewMatch={onNewMatch} />;
 }
