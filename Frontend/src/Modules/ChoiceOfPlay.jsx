@@ -15,7 +15,8 @@ export default function(){
         localStorage.setItem('gameMode', 'multiplayer');
         try {
             await startMatchmaking();
-            navigate(`/game${window.location.hash}`);
+            const roomTag = window.location.hash;
+            navigate(`/game${roomTag}`);
         } catch (error) {
             console.error('Failed to start multiplayer matchmaking:', error);
             setIsMatching(false);
