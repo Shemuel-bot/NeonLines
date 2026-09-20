@@ -175,7 +175,7 @@ export default function GameEnv() {
             if (!bodiesRef.current) bodiesRef.current = {};
 
             const now = Date.now();
-            const shouldSyncPositions = now - lastPositionSyncRef.current >= 1000 / 24;
+            const shouldSyncPositions = now - lastPositionSyncRef.current >= 1000 / 48;
             const alivePlayers = playersRef.current.filter((player) => player.getState('alive') !== false);
             const roundOver = playersRef.current.length > 1
                 ? getState('clock') === 0 && alivePlayers.length <= 1
@@ -203,7 +203,7 @@ export default function GameEnv() {
                 
                 const pendingBrush = playerIsDead || roundOver ? null : p.getState('spawnBrush');
                 const lastBrushSyncAt = lastBrushSyncRef.current[p.id] || 0;
-                const shouldProcessBrush = now - lastBrushSyncAt >= 1000 / 24;
+                const shouldProcessBrush = now - lastBrushSyncAt >= 1000 / 48;
                 if (pendingBrush && shouldProcessBrush && pendingBrush.id !== p.getState('lastProcessedBrushId')) {
                     lastBrushSyncRef.current[p.id] = now;
                     if (p.getState('clearOldBrush') === true) {
@@ -405,9 +405,8 @@ export default function GameEnv() {
         });
 
         if (isMultiplayer) {
-            sessionStorage.setItem('autoMatch', 'true');
             await myPlayer().leaveRoom();
-            navigate('/choice-of-play', { replace: true });
+            navigate('/choice-of-play?rematch=1', { replace: true });
             return;
         }
     };

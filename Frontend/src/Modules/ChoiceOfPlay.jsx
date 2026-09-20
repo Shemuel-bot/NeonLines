@@ -1,15 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { myPlayer, startMatchmaking, insertCoin, getState, setState } from 'playroomkit';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { startMatchmaking, setState } from 'playroomkit';
 import '../css/ChoiceOfPlay.css';
 export default function(){
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
     const [isMatching, setIsMatching] = useState(false);
     const hasStartedAutoMatch = useRef(false);
 
-    const startMultiplayer = async () => {
-        if (isMatching) return;
+    const startMultiplayer = async (isAutomatic = false, attempt = 0) => {
+        if (isMatching && !isAutomatic) return;
 
         setIsMatching(true);
         localStorage.setItem('gameMode', 'multiplayer');
@@ -19,19 +20,37 @@ export default function(){
             navigate(`/game${roomTag}`);
         } catch (error) {
             console.error('Failed to start multiplayer matchmaking:', error);
+            if (isAutomatic && attempt < 5) {
+                window.setTimeout(() => {
+                    startMultiplayer(true, attempt + 1);
+                }, 300);
+                return;
+            }
+
             setIsMatching(false);
         }
     };
 
     useEffect(() => {
-        const shouldAutoMatch = location.state?.autoMatch || sessionStorage.getItem('autoMatch') === 'true';
+        const shouldAutoMatch = location.state?.autoMatch || searchParams.get('rematch') === '1';
 
         if (shouldAutoMatch && !hasStartedAutoMatch.current) {
             hasStartedAutoMatch.current = true;
-            sessionStorage.removeItem('autoMatch');
-            startMultiplayer();
+
+            if (sessionStorage.getItem('rematchReloaded') !== 'true') {
+                sessionStorage.setItem('rematchReloaded', 'true');
+                window.location.reload();
+                return;
+            }
+
+            sessionStorage.removeItem('rematchReloaded');
+            const retryTimer = window.setTimeout(() => {
+                startMultiplayer(true);
+            }, 150);
+
+            return () => window.clearTimeout(retryTimer);
         }
-    }, [location.state]);
+    }, [location.state, searchParams]);
 
     const handleSoloPlay = () => {
         localStorage.setItem('gameMode', 'solo');

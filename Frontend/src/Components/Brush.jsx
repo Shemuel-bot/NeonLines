@@ -29,7 +29,7 @@ export default function Brush({ player, color }) {
     const handleMouseMove = (e) => {
         if (!isMe || !isDrawing.current || !myPlayer().getState('alive')) return;
         const now = Date.now();
-        if (now - lastBrushSentAt.current < 1000 / 24) return;
+        if (now - lastBrushSentAt.current < 1000 / 100) return;
 
         if (myPlayer().getState('ink') > 0) {
             lastBrushSentAt.current = now;
