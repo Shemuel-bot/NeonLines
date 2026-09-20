@@ -352,11 +352,6 @@ export default function GameEnv() {
     }, [players, gameResetKey]);
 
     const handleNewMatch = async () => {
-        if (localStorage.getItem('gameMode') !== 'solo') {
-            myPlayer().leaveRoom();
-            await startMatchmaking();
-        }
-
         resetGame({
             engineRef,
             runnerRef,
@@ -371,6 +366,10 @@ export default function GameEnv() {
             setAliveTime,
             setGameResetKey,
         });
+
+        if (localStorage.getItem('gameMode') !== 'solo') {
+            await startMatchmaking();
+        }
     };
 
     useEffect(() => {
