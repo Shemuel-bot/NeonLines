@@ -78,6 +78,23 @@ export default function GameEnv() {
     }, [players]);
 
     useEffect(() => {
+        const alivePlayers = players.filter((player) => player.getState('alive') !== false);
+        const isGameOver = players.length > 1
+            ? clock === 0 && alivePlayers.length <= 1
+            : alivePlayers.length === 0;
+        const localPlayerWon = isGameOver && isAlive !== false;
+
+        if (!localPlayerWon || !isHost()) return;
+
+        const playerBody = bodiesRef.current[myPlayer().id];
+        if (playerBody) {
+            Body.setVelocity(playerBody, { x: 0, y: 0 });
+            Body.setAngularVelocity(playerBody, 0);
+            Body.setStatic(playerBody, true);
+        }
+    }, [players, clock, isAlive]);
+
+    useEffect(() => {
         myPlayer().setState('ink', 50);
         myPlayer().setState('alive', true);
         myPlayer().setState('clearBrush', false);
