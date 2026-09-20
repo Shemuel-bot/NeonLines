@@ -14,6 +14,7 @@ import bounce from '../assets/SFX/bounce.mp3'
 import bloop from '../assets/SFX/bloop.mp3'
 
 const gunIconUrl = 'https://img.icons8.com/?size=100&id=UJ77tSjc1Hhv&format=png&color=000000';
+const playerColors = ['#ff4757', '#2ed573', '#1e90ff'];
 
 
 export default function GameEnv() {
@@ -67,12 +68,6 @@ export default function GameEnv() {
     }, [clock, isAlive]);
 
     useEffect(() => {
-        
-        if (isHost()) {
-            players.forEach(p => {
-                p.setState('alive', true);
-            });
-        }
         playersRef.current = players;
         
     }, [players]);
@@ -177,19 +172,32 @@ export default function GameEnv() {
         Events.on(engine, 'afterUpdate', () => {
             if (!bodiesRef.current) bodiesRef.current = {};
 
+            const alivePlayers = playersRef.current.filter((player) => player.getState('alive') !== false);
+            const roundOver = playersRef.current.length > 1
+                ? getState('clock') === 0 && alivePlayers.length <= 1
+                : alivePlayers.length === 0;
+
             playersRef.current.forEach((p) => {
+                const body = bodiesRef.current[p.id];
+                const playerIsDead = p.getState('alive') === false;
+
+                if (body && (playerIsDead || roundOver)) {
+                    Body.setVelocity(body, { x: 0, y: 0 });
+                    Body.setAngularVelocity(body, 0);
+                    Body.setStatic(body, true);
+                }
+
                 if (p.getState('clearBrush')) {
                     const oldBodies = brushBodiesRef.current[p.id] || [];
                     oldBodies.forEach(b => { Composite.remove(engine.world, b); });
                     brushBodiesRef.current[p.id] = []; 
                     p.setState('clearBrush', false); 
                 }
-                const body = bodiesRef.current[p.id];
                 if (body) {
                     p.setState('pos', { x: body.position.x, y: body.position.y, angle: body.angle });
                 }
                 
-                const pendingBrush = p.getState('spawnBrush');
+                const pendingBrush = playerIsDead || roundOver ? null : p.getState('spawnBrush');
                 if (pendingBrush && pendingBrush.id !== p.getState('lastProcessedBrushId')) {
                     if (p.getState('clearOldBrush') === true) {
                         const oldBodies = brushBodiesRef.current[p.id] || [];
@@ -211,7 +219,7 @@ export default function GameEnv() {
 
             const now = Date.now();
 
-            if (now - lastShotTimeRef.current > 1500) { 
+            if (!roundOver && now - lastShotTimeRef.current > 1500) { 
                 lastShotTimeRef.current = now;
                 
                 const activePlayerIds = Object.keys(bodiesRef.current).filter(id => {
@@ -339,9 +347,8 @@ export default function GameEnv() {
 
         players.forEach((p) => {
             if (!bodiesRef.current[p.id]) {
-                const existingPos = p.getState('pos');
-                const startX = existingPos ? existingPos.x : 100 + (Math.random() * 1000);
-                const startY = existingPos ? existingPos.y : 100;
+                const startX = 100 + (Math.random() * Math.max(100, window.innerWidth - 200));
+                const startY = 100 + (Math.random() * Math.max(100, window.innerHeight - 250));
 
                 const ball = Bodies.circle(startX, startY, 25, {
                     label: 'Player',
@@ -388,8 +395,9 @@ export default function GameEnv() {
         });
 
         if (isMultiplayer) {
-            myPlayer().leaveRoom();
-            navigate('/choice-of-play', { state: { autoMatch: true } });
+            sessionStorage.setItem('autoMatch', 'true');
+            await myPlayer().leaveRoom();
+            navigate('/choice-of-play', { replace: true });
             return;
         }
     };
@@ -466,14 +474,14 @@ export default function GameEnv() {
                 }}
             />
 
-            {players.map((player) => (
+            {players.map((player, index) => (
                 <React.Fragment key={player.id}>
                     <ProjectilesRenderer player={player} />
                     {/* Render the explosions synced by the Host */}
                     <ExplosionsRenderer player={player} />
                     
                     {player.getState('alive') !== false ? (
-                        <Player player={player} color={"#" + Math.floor(Math.random()*16777215).toString(16)}/>
+                        <Player player={player} color={playerColors[index % playerColors.length]}/>
                     ) : (
                         <div style={{position: 'absolute', top: 0, left: 0, color: 'white'}}>
                             Player {player.id} is out!

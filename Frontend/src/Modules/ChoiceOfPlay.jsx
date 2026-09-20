@@ -23,8 +23,11 @@ export default function(){
     };
 
     useEffect(() => {
-        if (location.state?.autoMatch && !hasStartedAutoMatch.current) {
+        const shouldAutoMatch = location.state?.autoMatch || sessionStorage.getItem('autoMatch') === 'true';
+
+        if (shouldAutoMatch && !hasStartedAutoMatch.current) {
             hasStartedAutoMatch.current = true;
+            sessionStorage.removeItem('autoMatch');
             startMultiplayer();
         }
     }, [location.state]);
