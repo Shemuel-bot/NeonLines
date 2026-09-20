@@ -111,7 +111,7 @@ export default function GameEnv() {
                         if (player) player.setState('alive', false);
                     }
                 } else if (bodyA.label === 'Wall' || bodyB.label === 'Wall') {
-                    if (getState('clock') != 0) return
+                    if (localStorage.getItem('gameMode') !== 'solo' && getState('clock') != 0) return
                     const otherBody = bodyA.label === 'Wall' ? bodyB : bodyA;
 
                     

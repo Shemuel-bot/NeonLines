@@ -17,8 +17,13 @@ export default function EndGameScreen({ players }) {
     }
 
     const handleNewMatch = async () => {
+        if (localStorage.getItem('gameMode') === 'solo') {
+            window.location.reload();
+            return;
+        }
+
         me.leaveRoom();
-        startMatchmaking(); // Start matchmaking again to find a new game
+        await startMatchmaking(); // Start matchmaking again to find a new game
         window.location.reload(); // Force reload to reset game state
     }
 
