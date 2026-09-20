@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { myPlayer, startMatchmaking } from 'playroomkit';
 import '../css/EndGameScreen.css';
 
-export default function EndGameScreen({ players }) {
+export default function EndGameScreen({ players, aliveTime }) {
     const navigate = useNavigate();
     const me = myPlayer();
     
@@ -15,6 +15,10 @@ export default function EndGameScreen({ players }) {
     if (players?.length > 1) {
         titleText = isAlive ? "🏆 You Win! 🏆" : "💀 You Lose! 💀";
     }
+
+    const secondsAlive = Math.floor(aliveTime / 1000);
+    const minutes = Math.floor(secondsAlive / 60).toString().padStart(2, '0');
+    const seconds = (secondsAlive % 60).toString().padStart(2, '0');
 
     const handleNewMatch = async () => {
         if (localStorage.getItem('gameMode') === 'solo') {
@@ -38,6 +42,7 @@ export default function EndGameScreen({ players }) {
             <h1 style={{ fontSize: '3rem', color: 'white', marginBottom: '20px' }}>
                 {titleText}
             </h1>
+            <p>Time Alive: {minutes}:{seconds}</p>
             <div className="endgame-buttons">
                 <button onClick={handleNewMatch}>New Match</button>
                 <button onClick={handleQuit}>Quit</button>

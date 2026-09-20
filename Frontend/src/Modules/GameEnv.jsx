@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Engine, Runner, Bodies, Composite, Events, Body } from 'matter-js'; 
-import { usePlayersList, isHost, transferHost, myPlayer, usePlayerState, getState } from 'playroomkit';
+import { usePlayersList, isHost, transferHost, myPlayer, usePlayerState, useMultiplayerState, getState } from 'playroomkit';
 import useSound from 'use-sound'
 
 import Player from '../Components/Player';
@@ -19,9 +19,11 @@ export default function GameEnv() {
     const players = usePlayersList();
     const [turretAngle] = usePlayerState(myPlayer(), 'turretAngle');
     const [isAlive] = usePlayerState(myPlayer(), 'alive');
+    const [clock] = useMultiplayerState('clock', 5);
     const [play] = useSound(bounce)
     const [playDeath] = useSound(bloop)
     const bounceSound = new Audio(bounce)
+    const [aliveTime, setAliveTime] = useState(0)
 
     const playersRef = useRef(players); 
     const engineRef = useRef(null);
@@ -33,6 +35,7 @@ export default function GameEnv() {
     const lastShotTimeRef = useRef(Date.now());
     const lastSyncTimeRef = useRef(Date.now()); 
     const wasAliveRef = useRef(isAlive);
+    const aliveStartedAtRef = useRef(null);
 
     const navigate = useNavigate();
 
@@ -42,6 +45,23 @@ export default function GameEnv() {
         }
         wasAliveRef.current = isAlive;
     }, [isAlive, playDeath]);
+
+    useEffect(() => {
+        const gameStarted = localStorage.getItem('gameMode') === 'solo' || clock === 0;
+        if (aliveStartedAtRef.current === null && gameStarted && isAlive !== false) {
+            aliveStartedAtRef.current = Date.now();
+        }
+
+        if (aliveStartedAtRef.current === null || !gameStarted || isAlive === false) return undefined;
+
+        const updateAliveTime = () => {
+            setAliveTime(Date.now() - aliveStartedAtRef.current);
+        };
+
+        updateAliveTime();
+        const timer = setInterval(updateAliveTime, 1000);
+        return () => clearInterval(timer);
+    }, [clock, isAlive]);
 
     useEffect(() => {
         
@@ -171,7 +191,7 @@ export default function GameEnv() {
 
             const now = Date.now();
 
-            if (now - lastShotTimeRef.current > 3000) { 
+            if (now - lastShotTimeRef.current > 1500) { 
                 lastShotTimeRef.current = now;
                 
                 const activePlayerIds = Object.keys(bodiesRef.current).filter(id => {
@@ -344,6 +364,10 @@ export default function GameEnv() {
         };
     }, [navigate]);
 
+    const secondsAlive = Math.floor(aliveTime / 1000);
+    const aliveMinutes = Math.floor(secondsAlive / 60).toString().padStart(2, '0');
+    const aliveSeconds = (secondsAlive % 60).toString().padStart(2, '0');
+
     return (
 
         <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
@@ -355,6 +379,19 @@ export default function GameEnv() {
                 )
             }
             <EndGameManager />
+            {isAlive !== false && (
+                <div style={{
+                    position: 'absolute',
+                    top: '105px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    color: 'white',
+                    fontSize: '24px',
+                    zIndex: 10
+                }}>
+                    Time Alive: {aliveMinutes}:{aliveSeconds}
+                </div>
+            )}
             {/* Inline CSS for the shockwave animation */}
             <style>{`
                 @keyframes shockwave {
