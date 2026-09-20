@@ -38,6 +38,7 @@ export default function GameEnv() {
     const explosionsRef = useRef([]); // NEW: Tracks explosion coordinates
     const lastShotTimeRef = useRef(Date.now());
     const lastSyncTimeRef = useRef(Date.now()); 
+    const lastPositionSyncRef = useRef(Date.now());
     const wasAliveRef = useRef(isAlive);
     const aliveStartedAtRef = useRef(null);
 
@@ -172,6 +173,8 @@ export default function GameEnv() {
         Events.on(engine, 'afterUpdate', () => {
             if (!bodiesRef.current) bodiesRef.current = {};
 
+            const now = Date.now();
+            const shouldSyncPositions = now - lastPositionSyncRef.current >= 1000 / 24;
             const alivePlayers = playersRef.current.filter((player) => player.getState('alive') !== false);
             const roundOver = playersRef.current.length > 1
                 ? getState('clock') === 0 && alivePlayers.length <= 1
@@ -193,7 +196,7 @@ export default function GameEnv() {
                     brushBodiesRef.current[p.id] = []; 
                     p.setState('clearBrush', false); 
                 }
-                if (body) {
+                if (body && shouldSyncPositions) {
                     p.setState('pos', { x: body.position.x, y: body.position.y, angle: body.angle });
                 }
                 
@@ -217,7 +220,9 @@ export default function GameEnv() {
                 }
             });
 
-            const now = Date.now();
+            if (shouldSyncPositions) {
+                lastPositionSyncRef.current = now;
+            }
 
             if (!roundOver && now - lastShotTimeRef.current > 1500) { 
                 lastShotTimeRef.current = now;
