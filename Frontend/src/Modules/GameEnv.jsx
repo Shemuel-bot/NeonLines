@@ -39,6 +39,7 @@ export default function GameEnv() {
     const lastShotTimeRef = useRef(Date.now());
     const lastSyncTimeRef = useRef(Date.now()); 
     const lastPositionSyncRef = useRef(Date.now());
+    const lastBrushSyncRef = useRef({});
     const wasAliveRef = useRef(isAlive);
     const aliveStartedAtRef = useRef(null);
 
@@ -201,7 +202,10 @@ export default function GameEnv() {
                 }
                 
                 const pendingBrush = playerIsDead || roundOver ? null : p.getState('spawnBrush');
-                if (pendingBrush && pendingBrush.id !== p.getState('lastProcessedBrushId')) {
+                const lastBrushSyncAt = lastBrushSyncRef.current[p.id] || 0;
+                const shouldProcessBrush = now - lastBrushSyncAt >= 1000 / 24;
+                if (pendingBrush && shouldProcessBrush && pendingBrush.id !== p.getState('lastProcessedBrushId')) {
+                    lastBrushSyncRef.current[p.id] = now;
                     if (p.getState('clearOldBrush') === true) {
                         const oldBodies = brushBodiesRef.current[p.id] || [];
                         oldBodies.forEach(b => { b.isSensor = true; });
@@ -392,6 +396,7 @@ export default function GameEnv() {
             explosionsRef,
             lastShotTimeRef,
             lastSyncTimeRef,
+            lastBrushSyncRef,
             aliveStartedAtRef,
             wasAliveRef,
             setAliveTime,

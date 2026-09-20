@@ -3,6 +3,7 @@ import { usePlayerState, myPlayer } from 'playroomkit';
 
 export default function Brush({ player, color }) {
     const isDrawing = useRef(false);
+    const lastBrushSentAt = useRef(0);
     const clearBrush = usePlayerState(player, 'clearBrush')[0];
     
     // Read the array of validated visual dots for this specific player
@@ -23,18 +24,21 @@ export default function Brush({ player, color }) {
     const handleMouseUp = () => {
         if (!isMe || !myPlayer().getState('alive')) return;
         isDrawing.current = false;
-        
     };
 
     const handleMouseMove = (e) => {
         if (!isMe || !isDrawing.current || !myPlayer().getState('alive')) return;
+        const now = Date.now();
+        if (now - lastBrushSentAt.current < 1000 / 24) return;
+
         if (myPlayer().getState('ink') > 0) {
+            lastBrushSentAt.current = now;
             myPlayer().setState('ink', myPlayer().getState('ink') - 1);
 
             player.setState('spawnBrush', {
                 x: e.clientX,
                 y: e.clientY,
-                id: `${player.id}-${Date.now()}-${Math.random()}`
+                id: `${player.id}-${now}-${Math.random()}`
             });
         }
     };
@@ -60,7 +64,7 @@ export default function Brush({ player, color }) {
         >
             {/* Render neon dots for this player */}
             {
-            myPlayer().getState('clearBrush') ? null :
+            clearBrush ? null :
             dots.map((dot) => (
                 <div
                     key={dot.id}

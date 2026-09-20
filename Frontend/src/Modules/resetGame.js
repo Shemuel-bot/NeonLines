@@ -10,6 +10,7 @@ export default function resetGame({
     explosionsRef,
     lastShotTimeRef,
     lastSyncTimeRef,
+    lastBrushSyncRef,
     aliveStartedAtRef,
     wasAliveRef,
     setAliveTime,
@@ -33,6 +34,7 @@ export default function resetGame({
     explosionsRef.current = [];
     lastShotTimeRef.current = Date.now();
     lastSyncTimeRef.current = Date.now();
+    lastBrushSyncRef.current = {};
     aliveStartedAtRef.current = null;
     wasAliveRef.current = true;
 
