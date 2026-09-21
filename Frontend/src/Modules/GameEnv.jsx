@@ -123,9 +123,9 @@ export default function GameEnv() {
         const walls = [
             turretBody,
             Bodies.rectangle(cw / 2, -10, cw, 20, { isStatic: true, label: 'Wall' }),
-            Bodies.rectangle(-10, ch / 2, 20, ch, { isStatic: true, label: 'Wall', fillStyle: 'red' }),
-            Bodies.rectangle(cw / 2, ch + 10, cw, 20, { isStatic: true, label: 'Wall', fillStyle: 'red' }),
-            Bodies.rectangle(cw + 10, ch / 2, 20, ch, { isStatic: true, label: 'Wall', fillStyle: 'red' }),
+            Bodies.rectangle(-10, ch / 2, 20, ch, { isStatic: true, label: 'Wall',}),
+            Bodies.rectangle(cw / 2, ch + 10, cw, 20, { isStatic: true, label: 'DeathFloor', fillStyle: 'red' }),
+            Bodies.rectangle(cw + 10, ch / 2, 20, ch, { isStatic: true, label: 'Wall' })
         ];
         Composite.add(engine.world, walls);
 
@@ -151,14 +151,14 @@ export default function GameEnv() {
                     projectileBody.isExploding = true; 
                     
                     const otherBody = isProjectileA ? bodyB : bodyA;
-                    if (otherBody.label !== 'Wall') {
+                    if (otherBody.label !== 'DeathFloor') {
                         // It hit a player directly
                         const player = playersRef.current.find(p => p.id === otherBody.id);
                         if (player) player.setState('alive', false);
                     }
-                } else if (bodyA.label === 'Wall' || bodyB.label === 'Wall') {
+                } else if (bodyA.label === 'DeathFloor' || bodyB.label === 'DeathFloor') {
                     if (localStorage.getItem('gameMode') !== 'solo' && getState('clock') != 0) return
-                    const otherBody = bodyA.label === 'Wall' ? bodyB : bodyA;
+                    const otherBody = bodyA.label === 'DeathFloor' ? bodyB : bodyA;
 
                     
                     Composite.remove(engine.world, otherBody);
@@ -473,9 +473,7 @@ export default function GameEnv() {
                 }
             `}</style>
 
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '20px', height: '98%', backgroundColor: 'red', boxShadow: '0 0 10px red, 0 0 20px red' }} />
             <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '20px', backgroundColor: 'red', boxShadow: '0 0 10px red, 0 0 20px red' }} />
-            <div style={{ position: 'absolute', top: 0, right: 0, width: '20px', height: '98%', backgroundColor: 'red', boxShadow: '0 0 10px red, 0 0 20px red' }} />
             
             <img
                 src={gunIconUrl}
