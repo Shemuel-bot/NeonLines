@@ -197,8 +197,8 @@ export default function GameEnv() {
                 const saberBody = saberBodiesRef.current[p.id];
                 if (saberState?.active && !playerIsDead && !roundOver) {
                     const saberPosition = {
-                        x: saberState.x * cw,
-                        y: saberState.y * ch
+                        x: saberState.x,
+                        y: saberState.y
                     };
                     const nextSaberBody = saberBody || Bodies.rectangle(saberPosition.x, saberPosition.y, 140, 14, {
                         label: 'Saber',
@@ -448,7 +448,7 @@ export default function GameEnv() {
                 localStorage.getItem('gameMode') === 'solo' ? (
                     <h1 style={{marginTop: '10%'}} className="clock">Solo Mode</h1>
                 ) : (
-                    <Countdown count={5} engine={engineRef.current}/>
+                    <Countdown count={60} engine={engineRef.current}/>
                 )
             }
             <EndGameManager key={gameResetKey} onNewMatch={handleNewMatch} />
