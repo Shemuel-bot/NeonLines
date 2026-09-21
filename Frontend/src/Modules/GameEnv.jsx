@@ -482,10 +482,10 @@ export default function GameEnv() {
                 alt="Turret"
                 style={{
                     position: 'absolute',
-                    top: 'clamp(30px, 6vh, 50px)',
+                    top: '50px',
                     left: '50%',
-                    width: 'clamp(48px, 8vw, 80px)',
-                    height: 'clamp(48px, 8vw, 80px)',
+                    width: '80px',
+                    height: '80px',
                     objectFit: 'contain',
                     zIndex: 10,
                     transform: `translate(-50%, -50%) rotate(${turretAngle || 0}rad)`,

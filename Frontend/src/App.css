@@ -15,34 +15,20 @@ body {
   justify-content: center;
   align-items: center;
   text-align: center;
-  min-height: 100vh;
-  width: 100%;
-  padding: clamp(16px, 3vw, 32px);
-  box-sizing: border-box;
-  overflow-x: hidden;
+  height: 100vh;
   background: radial-gradient(circle, var(--inner-color) 20%, #1a0420 80%);
 }
 
-#root {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.nav {
+.nav{
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  gap: clamp(12px, 2vw, 40px);
 }
 
 h1 {
   font-family: 'NeonFont', sans-serif;
-  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-size: 4rem;
   
   background: linear-gradient(45deg, var(--pink-glow), #7873f5, red);
   -webkit-background-clip: text;
@@ -53,9 +39,9 @@ h1 {
   
 }
 
-p {
+p{
   font-family: 'NeonFont', sans-serif;
-  font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+  font-size: 1rem;
   
   background: linear-gradient(45deg, var(--pink-glow), #aba8fc, red);
   -webkit-background-clip: text;
@@ -70,18 +56,16 @@ section {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: clamp(14px, 2vw, 20px);
+  gap: 20px;
 
-  width: min(90vw, 400px);
-  min-height: min(72vw, 400px);
-  padding: clamp(18px, 4vw, 38px) clamp(16px, 4vw, 32px);
+  width: 400px;
+  height: 400px;
   border: 4px solid transparent;
   border-radius: 50%;
   background: linear-gradient(var(--inner-color) 0 0) padding-box,
   var(--conic-gradient) border-box;
   position: relative;
   isolation: isolate;
-  box-sizing: border-box;
 }
 
 section::after,
@@ -110,8 +94,8 @@ section::after {
 .nameInput{
   margin-top: 20px;
   padding: 10px;
-  width: min(80%, 240px);
-  font-size: clamp(1rem, 2vw, 1.2rem);
+  width: 60%;
+  font-size: 1.2rem;
   border-style: solid;
   border-color: var(--pink-glow);
   border-width: 3px;
@@ -132,9 +116,9 @@ section::after {
 }
 
 section>button{
-  width: min(70%, 220px);
+  width: 50%;
   font-family: 'NeonFont', sans-serif;
-  font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+  font-size: 1.5rem;
   font-weight:1000;
   padding: 10px 20px;
   margin-top: 20px;
@@ -145,75 +129,9 @@ section>button{
   color: white;
   cursor: pointer;
   box-shadow: 0 0 10px var(--pink-glow);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   
 }
 
 section>button:hover {
   box-shadow: 0 0 20px var(--pink-glow), 0 0 40px var(--pink-glow);
-  transform: translateY(-1px);
-}
-
-.info-page,
-.settings-page {
-  width: min(90vw, 700px);
-  margin: 0 auto;
-  padding: clamp(24px, 5vw, 56px) clamp(16px, 4vw, 32px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  text-align: center;
-}
-
-.info-page p,
-.settings-page p {
-  max-width: 60ch;
-  line-height: 1.6;
-}
-
-.settings-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  width: 100%;
-}
-
-.settings-actions button {
-  min-width: 120px;
-  padding: 10px 18px;
-  border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-  font-size: clamp(0.9rem, 1.5vw, 1.1rem);
-}
-
-@media (max-width: 700px) {
-  body {
-    padding: 12px;
-  }
-
-  .nav {
-    flex-direction: column;
-  }
-
-  section {
-    width: min(92vw, 340px);
-    min-height: 320px;
-    border-radius: 30px;
-  }
-}
-
-@media (max-width: 420px) {
-  section > button,
-  .nameInput {
-    width: 100%;
-  }
-
-  section {
-    padding: 18px 14px;
-  }
 }

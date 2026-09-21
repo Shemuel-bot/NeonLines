@@ -25,8 +25,8 @@ export default function PlayerBall({ player, color }) {
             position: 'absolute',
             top: 0,
             left: 0,
-            width: 'clamp(32px, 4vw, 50px)',
-            height: 'clamp(32px, 4vw, 50px)',
+            width: '50px',
+            height: '50px',
             borderRadius: '50%',
             backgroundColor: color || '#ff4757',
             boxShadow: '0 0 15px ' + color || '#ff4757',
@@ -35,7 +35,7 @@ export default function PlayerBall({ player, color }) {
             justifyContent: 'center',
             color: 'white',
             fontWeight: 'bold',
-            fontSize: 'clamp(8px, 1vw, 12px)',
+            fontSize: '12px',
             userSelect: 'none',
             pointerEvents: 'none', // Lets clicks pass through to the Brush component
             transform: `translate(${pos.x}px, ${pos.y}px) translate(-50%, -50%) rotate(${pos.angle}rad)`
