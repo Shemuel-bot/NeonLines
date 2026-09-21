@@ -6,7 +6,6 @@ export default function resetGame({
     runnerRef,
     bodiesRef,
     saberBodiesRef,
-    previousSaberStatesRef,
     projectilesRef,
     explosionsRef,
     lastShotTimeRef,
@@ -30,7 +29,6 @@ export default function resetGame({
     runnerRef.current = null;
     bodiesRef.current = {};
     saberBodiesRef.current = {};
-    previousSaberStatesRef.current = {};
     projectilesRef.current = [];
     explosionsRef.current = [];
     lastShotTimeRef.current = Date.now();

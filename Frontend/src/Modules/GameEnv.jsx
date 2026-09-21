@@ -33,7 +33,6 @@ export default function GameEnv() {
     const runnerRef = useRef(null);
     const bodiesRef = useRef({}); 
     const saberBodiesRef = useRef({});
-    const previousSaberStatesRef = useRef({});
     
     const projectilesRef = useRef([]); 
     const explosionsRef = useRef([]); // NEW: Tracks explosion coordinates
@@ -212,65 +211,37 @@ export default function GameEnv() {
                         saberBodiesRef.current[p.id] = nextSaberBody;
                     }
 
-                    const previousSaber = previousSaberStatesRef.current[p.id] || {
-                        ...saberPosition,
-                        angle: saberState.angle
-                    };
-                    const distance = Math.hypot(
-                        saberPosition.x - previousSaber.x,
-                        saberPosition.y - previousSaber.y
-                    );
-                    const sampleCount = Math.max(1, Math.ceil(distance / 12));
-                    const hitPlayers = new Set();
                     const playerBodies = Object.values(bodiesRef.current);
-
-                    for (let sample = 1; sample <= sampleCount; sample += 1) {
-                        const progress = sample / sampleCount;
-                        const samplePosition = {
-                            x: previousSaber.x + (saberPosition.x - previousSaber.x) * progress,
-                            y: previousSaber.y + (saberPosition.y - previousSaber.y) * progress
-                        };
-                        const sampleAngle = previousSaber.angle + (saberState.angle - previousSaber.angle) * progress;
-
-                        Body.setPosition(nextSaberBody, samplePosition);
-                        Body.setAngle(nextSaberBody, sampleAngle);
-
-                        Query.collides(nextSaberBody, playerBodies).forEach((collision) => {
-                            const playerBody = collision.bodyA.label === 'Player' ? collision.bodyA : collision.bodyB;
-                            if (playerBody.label !== 'Player' || hitPlayers.has(playerBody.id)) return;
-
-                            hitPlayers.add(playerBody.id);
-                            const dx = playerBody.position.x - samplePosition.x;
-                            const dy = playerBody.position.y - samplePosition.y;
-                            const length = Math.hypot(dx, dy) || 1;
-                            const normal = { x: dx / length, y: dy / length };
-                            const velocity = playerBody.velocity;
-                            const velocityAlongNormal = velocity.x * normal.x + velocity.y * normal.y;
-                            const reflectedVelocity = velocityAlongNormal < 0
-                                ? {
-                                    x: velocity.x - 2 * velocityAlongNormal * normal.x,
-                                    y: velocity.y - 2 * velocityAlongNormal * normal.y
-                                }
-                                : velocity;
-                            const push = Math.max(4, Math.hypot(velocity.x, velocity.y) * 0.35);
-
-                            Body.setVelocity(playerBody, {
-                                x: reflectedVelocity.x + normal.x * push,
-                                y: reflectedVelocity.y + normal.y * push
-                            });
-                        });
-                    }
 
                     Body.setPosition(nextSaberBody, saberPosition);
                     Body.setAngle(nextSaberBody, saberState.angle);
-                    previousSaberStatesRef.current[p.id] = {
-                        ...saberPosition,
-                        angle: saberState.angle
-                    };
+
+                    Query.collides(nextSaberBody, playerBodies).forEach((collision) => {
+                        const playerBody = collision.bodyA.label === 'Player' ? collision.bodyA : collision.bodyB;
+                        if (playerBody.label !== 'Player') return;
+
+                        const dx = playerBody.position.x - saberPosition.x;
+                        const dy = playerBody.position.y - saberPosition.y;
+                        const length = Math.hypot(dx, dy) || 1;
+                        const normal = { x: dx / length, y: dy / length };
+                        const velocity = playerBody.velocity;
+                        const velocityAlongNormal = velocity.x * normal.x + velocity.y * normal.y;
+                        const reflectedVelocity = velocityAlongNormal < 0
+                            ? {
+                                x: velocity.x - 2 * velocityAlongNormal * normal.x,
+                                y: velocity.y - 2 * velocityAlongNormal * normal.y
+                            }
+                            : velocity;
+                        const push = Math.max(4, Math.hypot(velocity.x, velocity.y) * 0.35);
+
+                        Body.setVelocity(playerBody, {
+                            x: reflectedVelocity.x + normal.x * push,
+                            y: reflectedVelocity.y + normal.y * push
+                        });
+                    });
                 } else if (saberBody) {
                     Composite.remove(engine.world, saberBody);
                     delete saberBodiesRef.current[p.id];
-                    delete previousSaberStatesRef.current[p.id];
                 }
                 
             });
@@ -432,7 +403,6 @@ export default function GameEnv() {
             runnerRef,
             bodiesRef,
             saberBodiesRef,
-            previousSaberStatesRef,
             projectilesRef,
             explosionsRef,
             lastShotTimeRef,
