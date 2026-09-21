@@ -204,7 +204,7 @@ export default function GameEnv() {
                     const nextSaberBody = saberBody || Bodies.rectangle(saberPosition.x, saberPosition.y, 140, 14, {
                         label: 'Saber',
                         isStatic: true,
-                        restitution: 2,
+                        isSensor: true,
                         friction: 0
                     });
                     if (!saberBody) {
@@ -413,7 +413,7 @@ export default function GameEnv() {
                 const ball = Bodies.circle(startX, startY, 25, {
                     label: 'Player',
                     id: p.id,
-                    restitution: 1.3,
+                    restitution: 1,
                     friction: 0.005
                 });
                 
