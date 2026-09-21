@@ -5,12 +5,12 @@ export default function resetGame({
     engineRef,
     runnerRef,
     bodiesRef,
-    brushBodiesRef,
+    saberBodiesRef,
+    previousSaberStatesRef,
     projectilesRef,
     explosionsRef,
     lastShotTimeRef,
     lastSyncTimeRef,
-    lastBrushSyncRef,
     aliveStartedAtRef,
     wasAliveRef,
     setAliveTime,
@@ -29,12 +29,12 @@ export default function resetGame({
     engineRef.current = null;
     runnerRef.current = null;
     bodiesRef.current = {};
-    brushBodiesRef.current = {};
+    saberBodiesRef.current = {};
+    previousSaberStatesRef.current = {};
     projectilesRef.current = [];
     explosionsRef.current = [];
     lastShotTimeRef.current = Date.now();
     lastSyncTimeRef.current = Date.now();
-    lastBrushSyncRef.current = {};
     aliveStartedAtRef.current = null;
     wasAliveRef.current = true;
 
@@ -42,14 +42,10 @@ export default function resetGame({
         const player = myPlayer();
         player.setState('alive', true);
         player.setState('ink', 50);
-        player.setState('clearBrush', false);
-        player.setState('clearOldBrush', false);
-        player.setState('visualBrushes', []);
         player.setState('activeProjectiles', []);
         player.setState('explosions', []);
         player.setState('pos', null);
-        player.setState('spawnBrush', null);
-        player.setState('lastProcessedBrushId', null);
+        player.setState('saber', null);
     }
 
     setAliveTime(0);

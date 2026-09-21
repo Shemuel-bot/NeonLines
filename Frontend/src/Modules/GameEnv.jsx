@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Engine, Runner, Bodies, Composite, Events, Body } from 'matter-js'; 
+import { Engine, Runner, Bodies, Composite, Events, Body, Query } from 'matter-js'; 
 import { usePlayersList, isHost, transferHost, myPlayer, usePlayerState, useMultiplayerState, getState } from 'playroomkit';
 import useSound from 'use-sound'
 
@@ -32,14 +32,14 @@ export default function GameEnv() {
     const engineRef = useRef(null);
     const runnerRef = useRef(null);
     const bodiesRef = useRef({}); 
-    const brushBodiesRef = useRef({});
+    const saberBodiesRef = useRef({});
+    const previousSaberStatesRef = useRef({});
     
     const projectilesRef = useRef([]); 
     const explosionsRef = useRef([]); // NEW: Tracks explosion coordinates
     const lastShotTimeRef = useRef(Date.now());
     const lastSyncTimeRef = useRef(Date.now()); 
     const lastPositionSyncRef = useRef(Date.now());
-    const lastBrushSyncRef = useRef({});
     const wasAliveRef = useRef(isAlive);
     const aliveStartedAtRef = useRef(null);
 
@@ -94,7 +94,6 @@ export default function GameEnv() {
     useEffect(() => {
         myPlayer().setState('ink', 50);
         myPlayer().setState('alive', true);
-        myPlayer().setState('clearBrush', false);
         
         const handleVisibilityChange = () => {
             if (document.hidden && isHost()) {
@@ -191,37 +190,79 @@ export default function GameEnv() {
                     Body.setStatic(body, true);
                 }
 
-                if (p.getState('clearBrush')) {
-                    const oldBodies = brushBodiesRef.current[p.id] || [];
-                    oldBodies.forEach(b => { Composite.remove(engine.world, b); });
-                    brushBodiesRef.current[p.id] = []; 
-                    p.setState('clearBrush', false); 
-                }
                 if (body && shouldSyncPositions) {
                     p.setState('pos', { x: body.position.x, y: body.position.y, angle: body.angle });
                 }
-                
-                const pendingBrush = playerIsDead || roundOver ? null : p.getState('spawnBrush');
-                const lastBrushSyncAt = lastBrushSyncRef.current[p.id] || 0;
-                const shouldProcessBrush = now - lastBrushSyncAt >= 1000 / 48;
-                if (pendingBrush && shouldProcessBrush && pendingBrush.id !== p.getState('lastProcessedBrushId')) {
-                    lastBrushSyncRef.current[p.id] = now;
-                    if (p.getState('clearOldBrush') === true) {
-                        const oldBodies = brushBodiesRef.current[p.id] || [];
-                        oldBodies.forEach(b => { b.isSensor = true; });
-                        brushBodiesRef.current[p.id] = []; 
-                        p.setState('clearOldBrush', false); 
-                    }
-                    const brushBall = Bodies.circle(pendingBrush.x, pendingBrush.y, 10, {
-                        isStatic: true, restitution: 1.4, friction: 0.005
+
+                const saberState = p.getState('saber');
+                const saberBody = saberBodiesRef.current[p.id];
+                if (saberState?.active && !playerIsDead && !roundOver) {
+                    const nextSaberBody = saberBody || Bodies.rectangle(saberState.x, saberState.y, 140, 14, {
+                        label: 'Saber',
+                        isStatic: true,
+                        restitution: 2,
+                        friction: 0
                     });
-                    Composite.add(engine.world, brushBall);
-                    if (!brushBodiesRef.current[p.id]) brushBodiesRef.current[p.id] = [];
-                    brushBodiesRef.current[p.id].push(brushBall);
-                    const currentVisuals = p.getState('visualBrushes') || [];
-                    p.setState('visualBrushes', [...currentVisuals, { x: pendingBrush.x, y: pendingBrush.y, id: pendingBrush.id }]);
-                    p.setState('lastProcessedBrushId', pendingBrush.id);
+                    if (!saberBody) {
+                        Composite.add(engine.world, nextSaberBody);
+                        saberBodiesRef.current[p.id] = nextSaberBody;
+                    }
+
+                    const previousSaber = previousSaberStatesRef.current[p.id] || saberState;
+                    const distance = Math.hypot(
+                        saberState.x - previousSaber.x,
+                        saberState.y - previousSaber.y
+                    );
+                    const sampleCount = Math.max(1, Math.ceil(distance / 12));
+                    const hitPlayers = new Set();
+                    const playerBodies = Object.values(bodiesRef.current);
+
+                    for (let sample = 1; sample <= sampleCount; sample += 1) {
+                        const progress = sample / sampleCount;
+                        const samplePosition = {
+                            x: previousSaber.x + (saberState.x - previousSaber.x) * progress,
+                            y: previousSaber.y + (saberState.y - previousSaber.y) * progress
+                        };
+                        const sampleAngle = previousSaber.angle + (saberState.angle - previousSaber.angle) * progress;
+
+                        Body.setPosition(nextSaberBody, samplePosition);
+                        Body.setAngle(nextSaberBody, sampleAngle);
+
+                        Query.collides(nextSaberBody, playerBodies).forEach((collision) => {
+                            const playerBody = collision.bodyA.label === 'Player' ? collision.bodyA : collision.bodyB;
+                            if (playerBody.label !== 'Player' || hitPlayers.has(playerBody.id)) return;
+
+                            hitPlayers.add(playerBody.id);
+                            const dx = playerBody.position.x - samplePosition.x;
+                            const dy = playerBody.position.y - samplePosition.y;
+                            const length = Math.hypot(dx, dy) || 1;
+                            const normal = { x: dx / length, y: dy / length };
+                            const velocity = playerBody.velocity;
+                            const velocityAlongNormal = velocity.x * normal.x + velocity.y * normal.y;
+                            const reflectedVelocity = velocityAlongNormal < 0
+                                ? {
+                                    x: velocity.x - 2 * velocityAlongNormal * normal.x,
+                                    y: velocity.y - 2 * velocityAlongNormal * normal.y
+                                }
+                                : velocity;
+                            const push = Math.max(4, Math.hypot(velocity.x, velocity.y) * 0.35);
+
+                            Body.setVelocity(playerBody, {
+                                x: reflectedVelocity.x + normal.x * push,
+                                y: reflectedVelocity.y + normal.y * push
+                            });
+                        });
+                    }
+
+                    Body.setPosition(nextSaberBody, { x: saberState.x, y: saberState.y });
+                    Body.setAngle(nextSaberBody, saberState.angle);
+                    previousSaberStatesRef.current[p.id] = { ...saberState };
+                } else if (saberBody) {
+                    Composite.remove(engine.world, saberBody);
+                    delete saberBodiesRef.current[p.id];
+                    delete previousSaberStatesRef.current[p.id];
                 }
+                
             });
 
             if (shouldSyncPositions) {
@@ -369,17 +410,6 @@ export default function GameEnv() {
                 Composite.add(engineRef.current.world, ball);
                 bodiesRef.current[p.id] = ball;
 
-                const existingBrushes = p.getState('visualBrushes') || [];
-                if (existingBrushes.length > 0) {
-                    if (!brushBodiesRef.current[p.id]) brushBodiesRef.current[p.id] = [];
-                    existingBrushes.forEach((brushDot) => {
-                        const brushBall = Bodies.circle(brushDot.x, brushDot.y, 10, {
-                            isStatic: true, restitution: 1, friction: 0.005
-                        });
-                        Composite.add(engineRef.current.world, brushBall);
-                        brushBodiesRef.current[p.id].push(brushBall);
-                    });
-                }
             }
         });
     }, [players, gameResetKey]);
@@ -391,12 +421,12 @@ export default function GameEnv() {
             engineRef,
             runnerRef,
             bodiesRef,
-            brushBodiesRef,
+            saberBodiesRef,
+            previousSaberStatesRef,
             projectilesRef,
             explosionsRef,
             lastShotTimeRef,
             lastSyncTimeRef,
-            lastBrushSyncRef,
             aliveStartedAtRef,
             wasAliveRef,
             setAliveTime,
