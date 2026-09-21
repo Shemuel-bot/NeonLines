@@ -21,8 +21,8 @@ export default function Brush({ player, color }) {
         );
 
         player.setState('saber', {
-            x: e.clientX,
-            y: e.clientY,
+            x: e.clientX / window.innerWidth,
+            y: e.clientY / window.innerHeight,
             angle: e.ctrlKey ? angle + e.movementX * 0.02 : angle,
             active: true
         });
@@ -62,7 +62,7 @@ export default function Brush({ player, color }) {
                         borderRadius: '999px',
                         pointerEvents: 'none',
                         zIndex: 6,
-                        transform: `translate(${saber.x}px, ${saber.y}px) translate(-50%, -50%) rotate(${saber.angle}rad)`
+                        transform: `translate(${saber.x * window.innerWidth}px, ${saber.y * window.innerHeight}px) translate(-50%, -50%) rotate(${saber.angle}rad)`
                     }}
                 >
                     <div style={{

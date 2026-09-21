@@ -197,7 +197,11 @@ export default function GameEnv() {
                 const saberState = p.getState('saber');
                 const saberBody = saberBodiesRef.current[p.id];
                 if (saberState?.active && !playerIsDead && !roundOver) {
-                    const nextSaberBody = saberBody || Bodies.rectangle(saberState.x, saberState.y, 140, 14, {
+                    const saberPosition = {
+                        x: saberState.x * cw,
+                        y: saberState.y * ch
+                    };
+                    const nextSaberBody = saberBody || Bodies.rectangle(saberPosition.x, saberPosition.y, 140, 14, {
                         label: 'Saber',
                         isStatic: true,
                         restitution: 2,
@@ -208,10 +212,13 @@ export default function GameEnv() {
                         saberBodiesRef.current[p.id] = nextSaberBody;
                     }
 
-                    const previousSaber = previousSaberStatesRef.current[p.id] || saberState;
+                    const previousSaber = previousSaberStatesRef.current[p.id] || {
+                        ...saberPosition,
+                        angle: saberState.angle
+                    };
                     const distance = Math.hypot(
-                        saberState.x - previousSaber.x,
-                        saberState.y - previousSaber.y
+                        saberPosition.x - previousSaber.x,
+                        saberPosition.y - previousSaber.y
                     );
                     const sampleCount = Math.max(1, Math.ceil(distance / 12));
                     const hitPlayers = new Set();
@@ -220,8 +227,8 @@ export default function GameEnv() {
                     for (let sample = 1; sample <= sampleCount; sample += 1) {
                         const progress = sample / sampleCount;
                         const samplePosition = {
-                            x: previousSaber.x + (saberState.x - previousSaber.x) * progress,
-                            y: previousSaber.y + (saberState.y - previousSaber.y) * progress
+                            x: previousSaber.x + (saberPosition.x - previousSaber.x) * progress,
+                            y: previousSaber.y + (saberPosition.y - previousSaber.y) * progress
                         };
                         const sampleAngle = previousSaber.angle + (saberState.angle - previousSaber.angle) * progress;
 
@@ -254,9 +261,12 @@ export default function GameEnv() {
                         });
                     }
 
-                    Body.setPosition(nextSaberBody, { x: saberState.x, y: saberState.y });
+                    Body.setPosition(nextSaberBody, saberPosition);
                     Body.setAngle(nextSaberBody, saberState.angle);
-                    previousSaberStatesRef.current[p.id] = { ...saberState };
+                    previousSaberStatesRef.current[p.id] = {
+                        ...saberPosition,
+                        angle: saberState.angle
+                    };
                 } else if (saberBody) {
                     Composite.remove(engine.world, saberBody);
                     delete saberBodiesRef.current[p.id];
@@ -269,7 +279,7 @@ export default function GameEnv() {
                 lastPositionSyncRef.current = now;
             }
 
-            if (!roundOver && now - lastShotTimeRef.current > 1500) { 
+            if (!roundOver && now - lastShotTimeRef.current > 3000) { 
                 lastShotTimeRef.current = now;
                 
                 const activePlayerIds = Object.keys(bodiesRef.current).filter(id => {
