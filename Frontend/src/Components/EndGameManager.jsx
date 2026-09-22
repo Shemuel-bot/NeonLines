@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { myPlayer, usePlayerState, usePlayersList, useMultiplayerState } from 'playroomkit';
+import { myPlayer, usePlayerState, usePlayersList, useMultiplayerState, onPlayerJoin } from 'playroomkit';
 import EndGameScreen from './EndGameScreen';
 
 export default function EndGameManager({ onNewMatch }) {

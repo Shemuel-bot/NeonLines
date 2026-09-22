@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { startMatchmaking, setState } from 'playroomkit';
+import { startMatchmaking, setState, getState } from 'playroomkit';
 import '../css/ChoiceOfPlay.css';
 export default function(){
     const navigate = useNavigate();

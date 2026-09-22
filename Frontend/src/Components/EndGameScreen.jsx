@@ -1,4 +1,4 @@
-import React from 'react';
+import {React, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { myPlayer } from 'playroomkit';
 import '../css/EndGameScreen.css';
@@ -9,7 +9,6 @@ export default function EndGameScreen({ players, aliveTime, onNewMatch }) {
     
     // Check if the local player is still alive
     const isAlive = me?.getState('alive') !== false;
-    
     // Determine the text based on player count and alive status
     let titleText = "Game Over";
     if (players?.length > 1) {

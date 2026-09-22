@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Engine, Runner, Bodies, Composite, Events, Body, Query } from 'matter-js'; 
-import { usePlayersList, isHost, transferHost, myPlayer, usePlayerState, useMultiplayerState, getState } from 'playroomkit';
+import { usePlayersList, isHost, transferHost, myPlayer, usePlayerState, useMultiplayerState, getState} from 'playroomkit';
 import useSound from 'use-sound'
 
 import Player from '../Components/Player';
@@ -21,7 +21,7 @@ export default function GameEnv() {
     const players = usePlayersList();
     const [turretAngle] = usePlayerState(myPlayer(), 'turretAngle');
     const [isAlive] = usePlayerState(myPlayer(), 'alive');
-    const [clock] = useMultiplayerState('clock', 5);
+    const [clock] = useMultiplayerState('clock', 5, { persist: true });
     const [play] = useSound(bounce)
     const [playDeath] = useSound(bloop)
     const bounceSound = new Audio(bounce)
@@ -498,7 +498,7 @@ export default function GameEnv() {
                     <ExplosionsRenderer player={player} />
                     
                     {player.getState('alive') !== false ? (
-                        <Player player={player} color={playerColors[index % playerColors.length]}/>
+                        <Player player={player} color={playerColors[index % playerColors.length]} resetSearch={handleNewMatch} />
                     ) : (
                         <div style={{position: 'absolute', top: 0, left: 0, color: 'white'}}>
                             Player {player.id} is out!
