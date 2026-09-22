@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Engine, Runner, Bodies, Composite, Events, Body, Query } from 'matter-js'; 
-import { usePlayersList, isHost, transferHost, myPlayer, usePlayerState, useMultiplayerState, getState} from 'playroomkit';
+import { usePlayersList, isHost, transferHost, myPlayer, usePlayerState, useMultiplayerState, getState, onPlayerJoin, onDisconnect} from 'playroomkit';
 import useSound from 'use-sound'
 
 import Player from '../Components/Player';
@@ -74,6 +74,29 @@ export default function GameEnv() {
     }, [players]);
 
     useEffect(() => {
+        const unsubscribe = onPlayerJoin((newPlayer) => {
+            if (localStorage.getItem('gameMode') !== 'solo' && isHost() && getState('clock') === 0) {
+                newPlayer.kick();
+            }
+        });
+
+        return unsubscribe;
+    }, []);
+
+    useEffect(() => {
+        const unsubscribe = onDisconnect((event) => {
+            if (localStorage.getItem('gameMode') === 'solo') return;
+            if (event.reason !== 'PLAYER_KICKED' && event.code !== 4999) return;
+
+            window.setTimeout(() => {
+                navigate('/choice-of-play?rematch=1', { replace: true });
+            }, 0);
+        });
+
+        return unsubscribe;
+    }, [navigate]);
+
+    useEffect(() => {
         const alivePlayers = players.filter((player) => player.getState('alive') !== false);
         const isGameOver = players.length > 1
             ? clock === 0 && alivePlayers.length <= 1
@@ -113,6 +136,7 @@ export default function GameEnv() {
         const engine = engineRef.current;
         const cw = window.innerWidth;
         const ch = window.innerHeight;
+        const playerRadius = 25;
 
         const turretBody = Bodies.rectangle(cw / 2, 50, 80, 80, { 
             isStatic: true, 
@@ -122,10 +146,10 @@ export default function GameEnv() {
 
         const walls = [
             turretBody,
-            Bodies.rectangle(cw / 2, -10, cw, 20, { isStatic: true, label: 'Wall' }),
-            Bodies.rectangle(-10, ch / 2, 20, ch, { isStatic: true, label: 'Wall',}),
-            Bodies.rectangle(cw / 2, ch + 10, cw, 20, { isStatic: true, label: 'DeathFloor', fillStyle: 'red' }),
-            Bodies.rectangle(cw + 10, ch / 2, 20, ch, { isStatic: true, label: 'Wall' })
+            Bodies.rectangle(cw / 2, -50, cw, 100, { isStatic: true, label: 'Wall' }),
+            Bodies.rectangle(-50, ch / 2, 100, ch, { isStatic: true, label: 'Wall' }),
+            Bodies.rectangle(cw / 2, ch + 50, cw, 100, { isStatic: true, label: 'DeathFloor', fillStyle: 'red' }),
+            Bodies.rectangle(cw + 50, ch / 2, 100, ch, { isStatic: true, label: 'Wall' })
         ];
         Composite.add(engine.world, walls);
 
@@ -187,6 +211,26 @@ export default function GameEnv() {
                     Body.setVelocity(body, { x: 0, y: 0 });
                     Body.setAngularVelocity(body, 0);
                     Body.setStatic(body, true);
+                }
+
+                if (body && !playerIsDead && !roundOver) {
+                    const position = body.position;
+                    const velocity = body.velocity;
+                    const boundedPosition = {
+                        x: Math.max(playerRadius, Math.min(cw - playerRadius, position.x)),
+                        y: Math.max(playerRadius, Math.min(ch - playerRadius, position.y))
+                    };
+                    const crossedLeftOrRight = boundedPosition.x !== position.x;
+                    const crossedTopOrBottom = boundedPosition.y !== position.y;
+                    const crossedBoundary = crossedLeftOrRight || crossedTopOrBottom;
+
+                    if (crossedBoundary) {
+                        Body.setPosition(body, boundedPosition);
+                        Body.setVelocity(body, {
+                            x: crossedLeftOrRight && velocity.x * (position.x - boundedPosition.x) > 0 ? -velocity.x : velocity.x,
+                            y: crossedTopOrBottom && velocity.y * (position.y - boundedPosition.y) > 0 ? -velocity.y : velocity.y
+                        });
+                    }
                 }
 
                 if (body && shouldSyncPositions) {
@@ -384,7 +428,7 @@ export default function GameEnv() {
                 const ball = Bodies.circle(startX, startY, 25, {
                     label: 'Player',
                     id: p.id,
-                    restitution: 1,
+                    restitution: 1.1,
                     friction: 0.005
                 });
                 
@@ -498,7 +542,7 @@ export default function GameEnv() {
                     <ExplosionsRenderer player={player} />
                     
                     {player.getState('alive') !== false ? (
-                        <Player player={player} color={playerColors[index % playerColors.length]} resetSearch={handleNewMatch} />
+                        <Player player={player} color={playerColors[index % playerColors.length]} />
                     ) : (
                         <div style={{position: 'absolute', top: 0, left: 0, color: 'white'}}>
                             Player {player.id} is out!
