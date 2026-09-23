@@ -137,6 +137,7 @@ export default function GameEnv() {
         const cw = window.innerWidth;
         const ch = window.innerHeight;
         const playerRadius = 25;
+        const maxPlayerSpeed = 20;
 
         const turretBody = Bodies.rectangle(cw / 2, 50, 80, 80, { 
             isStatic: true, 
@@ -359,6 +360,11 @@ export default function GameEnv() {
                 });
 
                 if (exploded) {
+                    const explosionPosition = {
+                        x: proj.body.position.x,
+                        y: proj.body.position.y
+                    };
+
                     // Apply shockwave forces
                     Object.entries(bodiesRef.current).forEach(([blastId, pb]) => {
                         const bp = playersRef.current.find(player => player.id === blastId);
@@ -383,8 +389,8 @@ export default function GameEnv() {
                     Composite.remove(engine.world, proj.body); 
                     explosionsRef.current.push({
                         id: proj.id,
-                        x: proj.body.position.x,
-                        y: proj.body.position.y,
+                        x: explosionPosition.x,
+                        y: explosionPosition.y,
                         timestamp: now
                     });
                 } else {
@@ -393,6 +399,17 @@ export default function GameEnv() {
             });
             
             projectilesRef.current = activeProjectiles;
+
+
+            Object.entries(bodiesRef.current).forEach(([pId, playerBody]) => {
+                const speed = Math.hypot(playerBody.velocity.x, playerBody.velocity.y);
+                if (speed > maxPlayerSpeed){
+                    Body.setVelocity(playerBody, {
+                        x: (playerBody.velocity.x / speed) * maxPlayerSpeed,
+                        y: (playerBody.velocity.y / speed) * maxPlayerSpeed
+                    });
+                }
+            });
 
             // Clean up visual explosions older than 400ms
             explosionsRef.current = explosionsRef.current.filter(exp => now - exp.timestamp < 400);
