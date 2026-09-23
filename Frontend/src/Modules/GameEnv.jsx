@@ -8,7 +8,7 @@ import Player from '../Components/Player';
 import EndGameManager from '../Components/EndGameManager';
 import { ExplosionsRenderer, ProjectilesRenderer } from '../Components/explosiveBall';
 import Countdown from '../Components/Countdown';
-import resetGame from './resetGame';
+import resetGame from '../assets/helpers/resetGame';
 
 import bounce from '../assets/SFX/bounce.mp3'
 import bloop from '../assets/SFX/bloop.mp3'
@@ -482,6 +482,30 @@ export default function GameEnv() {
         }
     };
 
+    const handleLeaveGame = async () => {
+        const isMultiplayer = localStorage.getItem('gameMode') !== 'solo';
+        resetGame({
+            engineRef,
+            runnerRef,
+            bodiesRef,
+            saberBodiesRef,
+            projectilesRef,
+            explosionsRef,
+            lastShotTimeRef,
+            lastSyncTimeRef,
+            aliveStartedAtRef,
+            wasAliveRef,
+            setAliveTime,
+            setGameResetKey,
+            resetPlayerState: !isMultiplayer,
+        });
+        if (isMultiplayer){
+            await myPlayer().leaveRoom();  
+        }
+        navigate('/')
+        
+    }
+
     useEffect(() => {
         const wasAlreadyInRoom = sessionStorage.getItem('inGameEnv');
         if (wasAlreadyInRoom) {
@@ -505,6 +529,9 @@ export default function GameEnv() {
     return (
 
         <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
+            <button onClick={handleLeaveGame} style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}>
+                    Leave Room
+            </button>
             {
                 localStorage.getItem('gameMode') === 'solo' ? (
                     <h1 style={{marginTop: '10%'}} className="clock">Solo Mode</h1>
