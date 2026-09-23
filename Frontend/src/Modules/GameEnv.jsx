@@ -21,7 +21,7 @@ export default function GameEnv() {
     const players = usePlayersList();
     const [turretAngle] = usePlayerState(myPlayer(), 'turretAngle');
     const [isAlive] = usePlayerState(myPlayer(), 'alive');
-    const [clock] = useMultiplayerState('clock', 5, { persist: true });
+    const [clock] = useMultiplayerState('clock', 15, { persist: true });
     const [play] = useSound(bounce)
     const [playDeath] = useSound(bloop)
     const bounceSound = new Audio(bounce)
@@ -529,7 +529,7 @@ export default function GameEnv() {
     return (
 
         <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
-            <button onClick={handleLeaveGame} style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}>
+                <button className="leave-game-button" onClick={handleLeaveGame}>
                     Leave Room
             </button>
             {
