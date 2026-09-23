@@ -8,7 +8,7 @@ import Player from '../Components/Player';
 import EndGameManager from '../Components/EndGameManager';
 import { ExplosionsRenderer, ProjectilesRenderer } from '../Components/explosiveBall';
 import Countdown from '../Components/Countdown';
-import resetGame from '../assets/helpers/resetGame';
+import resetGame from '../helpers/resetGame';
 
 import bounce from '../assets/SFX/bounce.mp3'
 import bloop from '../assets/SFX/bloop.mp3'
