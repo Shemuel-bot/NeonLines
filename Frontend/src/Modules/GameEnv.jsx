@@ -536,7 +536,7 @@ export default function GameEnv() {
     return (
 
         <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
-            <div ref={worldRef} style={{ width: WORLD_W, height: WORLD_H, transform: `scale(${scale})`, transformOrigin: 'center', position: 'absolute', flexShrink: 0, }}>
+            <div ref={worldRef} style={{ width: WORLD_W, height: WORLD_H, transform: `translate(-50%, -50%) scale(${scale})`, transformOrigin: 'center', position: 'absolute', left: '50%', top: '50%', flexShrink: 0, }}>
                     <button className="leave-game-button" onClick={handleLeaveGame}>
                         Leave Room
                 </button>

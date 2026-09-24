@@ -9,7 +9,7 @@ export default function scaleWorld(worldW, worldH) {
             setScale(scaleConst);
         }
         calc();
-        window.addEventListener('resize', calc());
+        window.addEventListener('resize', calc);
 
         return () => window.removeEventListener('resize', calc);
     }, [worldW, worldH]);
