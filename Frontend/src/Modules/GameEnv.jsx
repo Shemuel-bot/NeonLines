@@ -9,6 +9,7 @@ import EndGameManager from '../Components/EndGameManager';
 import { ExplosionsRenderer, ProjectilesRenderer } from '../Components/explosiveBall';
 import Countdown from '../Components/Countdown';
 import resetGame from '../helpers/resetGame';
+import scaleWorld from '../helpers/scaleWorld';
 
 import bounce from '../assets/SFX/bounce.mp3'
 import bloop from '../assets/SFX/bloop.mp3'
@@ -41,6 +42,12 @@ export default function GameEnv() {
     const lastPositionSyncRef = useRef(Date.now());
     const wasAliveRef = useRef(isAlive);
     const aliveStartedAtRef = useRef(null);
+
+    const WORLD_W = 1900;
+    const WORLD_H = 900;
+    const worldRef = useRef(null); // used by Brush for coordinate conversion
+    const scale = scaleWorld(WORLD_W, WORLD_H);
+
 
     const navigate = useNavigate();
 
@@ -134,8 +141,8 @@ export default function GameEnv() {
     const startPhysicsEngine = () => {
         engineRef.current = Engine.create();
         const engine = engineRef.current;
-        const cw = window.innerWidth;
-        const ch = window.innerHeight;
+        const cw = WORLD_W;
+        const ch = WORLD_H;
         const playerRadius = 25;
         const maxPlayerSpeed = 20;
 
@@ -529,71 +536,73 @@ export default function GameEnv() {
     return (
 
         <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
-                <button className="leave-game-button" onClick={handleLeaveGame}>
-                    Leave Room
-            </button>
-            {
-                localStorage.getItem('gameMode') === 'solo' ? (
-                    <h1 style={{marginTop: '10%'}} className="clock">Solo Mode</h1>
-                ) : (
-                    <Countdown count={60} engine={engineRef.current}/>
-                )
-            }
-            <EndGameManager key={gameResetKey} onNewMatch={handleNewMatch} />
-            {isAlive !== false && (
-                <div style={{
-                    position: 'absolute',
-                    top: '105px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    color: 'white',
-                    fontSize: '24px',
-                    zIndex: 10
-                }}>
-                    Time Alive: {aliveMinutes}:{aliveSeconds}
-                </div>
-            )}
-            {/* Inline CSS for the shockwave animation */}
-            <style>{`
-                @keyframes shockwave {
-                    0% { width: 0px; height: 0px; opacity: 1; border-width: 30px; }
-                    100% { width: 500px; height: 500px; opacity: 0; border-width: 2px; }
-                }
-            `}</style>
-
-            <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '20px', backgroundColor: 'red', boxShadow: '0 0 10px red, 0 0 20px red' }} />
-            
-            <img
-                src={gunIconUrl}
-                alt="Turret"
-                style={{
-                    position: 'absolute',
-                    top: '50px',
-                    left: '50%',
-                    width: '80px',
-                    height: '80px',
-                    objectFit: 'contain',
-                    zIndex: 10,
-                    transform: `translate(-50%, -50%) rotate(${turretAngle || 0}rad)`,
-                    transformOrigin: 'center'
-                }}
-            />
-
-            {players.map((player, index) => (
-                <React.Fragment key={player.id}>
-                    <ProjectilesRenderer player={player} />
-                    {/* Render the explosions synced by the Host */}
-                    <ExplosionsRenderer player={player} />
-                    
-                    {player.getState('alive') !== false ? (
-                        <Player player={player} color={playerColors[index % playerColors.length]} />
+            <div ref={worldRef} style={{ width: WORLD_W, height: WORLD_H, transform: `scale(${scale})`, transformOrigin: 'center', position: 'absolute', flexShrink: 0, }}>
+                    <button className="leave-game-button" onClick={handleLeaveGame}>
+                        Leave Room
+                </button>
+                {
+                    localStorage.getItem('gameMode') === 'solo' ? (
+                        <h1 style={{marginTop: '10%'}} className="clock">Solo Mode</h1>
                     ) : (
-                        <div style={{position: 'absolute', top: 0, left: 0, color: 'white'}}>
-                            Player {player.id} is out!
-                        </div>
-                    )}
-                </React.Fragment>
-            ))}
+                        <Countdown count={60} engine={engineRef.current}/>
+                    )
+                }
+                <EndGameManager key={gameResetKey} onNewMatch={handleNewMatch} />
+                {isAlive !== false && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '105px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        color: 'white',
+                        fontSize: '24px',
+                        zIndex: 10
+                    }}>
+                        Time Alive: {aliveMinutes}:{aliveSeconds}
+                    </div>
+                )}
+                {/* Inline CSS for the shockwave animation */}
+                <style>{`
+                    @keyframes shockwave {
+                        0% { width: 0px; height: 0px; opacity: 1; border-width: 30px; }
+                        100% { width: 500px; height: 500px; opacity: 0; border-width: 2px; }
+                    }
+                `}</style>
+
+                <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '20px', backgroundColor: 'red', boxShadow: '0 0 10px red, 0 0 20px red' }} />
+                
+                <img
+                    src={gunIconUrl}
+                    alt="Turret"
+                    style={{
+                        position: 'absolute',
+                        top: '50px',
+                        left: '50%',
+                        width: '80px',
+                        height: '80px',
+                        objectFit: 'contain',
+                        zIndex: 10,
+                        transform: `translate(-50%, -50%) rotate(${turretAngle || 0}rad)`,
+                        transformOrigin: 'center'
+                    }}
+                />
+
+                {players.map((player, index) => (
+                    <React.Fragment key={player.id}>
+                        <ProjectilesRenderer player={player} />
+                        {/* Render the explosions synced by the Host */}
+                        <ExplosionsRenderer player={player} />
+                        
+                        {player.getState('alive') !== false ? (
+                            <Player player={player} color={playerColors[index % playerColors.length]} worldRef={worldRef} WORLD_W={WORLD_W} WORLD_H={WORLD_H} scale={scale}/>
+                        ) : (
+                            <div style={{position: 'absolute', top: 0, left: 0, color: 'white'}}>
+                                Player {player.id} is out!
+                            </div>
+                        )}
+                    </React.Fragment>
+                ))}
+            </div>
         </div>
     );
 }

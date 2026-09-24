@@ -1,7 +1,7 @@
 import { React, useRef } from 'react';
 import { usePlayerState, myPlayer } from 'playroomkit';
 
-export default function Brush({ player, color }) {
+export default function Brush({ player, color, worldRef, WORLD_W, WORLD_H, scale }) {
     const lastSaberSentAt = useRef(0);
     const [saber] = usePlayerState(player, 'saber');
 
@@ -15,15 +15,19 @@ export default function Brush({ player, color }) {
 
         lastSaberSentAt.current = now;
         const currentSaber = player.getState('saber');
+        const rect = worldRef.current.getBoundingClientRect()
+        const WorldX = (e.clientX - rect.left) / scale
+        const WorldY = (e.clientY - rect.top) / scale
+
         const angle = currentSaber?.angle ?? Math.atan2(
-            e.clientY - window.innerHeight / 2,
-            e.clientX - window.innerWidth / 2
+            WorldY - WORLD_H / 2,
+            WorldX - WORLD_W / 2
         );
 
         player.setState('saber', {
-            x: e.clientX,
-            y: e.clientY,
-            angle: e.ctrlKey ? angle + e.movementX * 0.02 : angle,
+            x: WorldX,
+            y: WorldY,
+            angle: e.ctrlKey ? angle + (e.movementX / 2) * 0.02 : angle,
             active: true
         });
     };

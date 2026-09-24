@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { usePlayerState, myPlayer } from 'playroomkit';
 import Player from './Player';
 
-export default function PlayerBall({ player, color }) {
+export default function PlayerBall({ player, color}) {
     // 1. Read the position calculated by the Host
     const [pos] = usePlayerState(player, 'pos');
 
