@@ -17,6 +17,72 @@ import bloop from '../assets/SFX/bloop.mp3'
 const gunIconUrl = 'https://img.icons8.com/?size=100&id=UJ77tSjc1Hhv&format=png&color=000000';
 const playerColors = ['#ff4757', '#2ed573', '#1e90ff'];
 
+const distanceToSegment = (point, start, end) => {
+    const segmentX = end.x - start.x;
+    const segmentY = end.y - start.y;
+    const segmentLengthSquared = segmentX * segmentX + segmentY * segmentY;
+    const progress = segmentLengthSquared === 0
+        ? 0
+        : Math.max(0, Math.min(1, ((point.x - start.x) * segmentX + (point.y - start.y) * segmentY) / segmentLengthSquared));
+    const closestX = start.x + progress * segmentX;
+    const closestY = start.y + progress * segmentY;
+
+    return Math.hypot(point.x - closestX, point.y - closestY);
+};
+
+const segmentsIntersect = (firstStart, firstEnd, secondStart, secondEnd) => {
+    const cross = (first, second) => first.x * second.y - first.y * second.x;
+    const firstVector = { x: firstEnd.x - firstStart.x, y: firstEnd.y - firstStart.y };
+    const secondVector = { x: secondEnd.x - secondStart.x, y: secondEnd.y - secondStart.y };
+    const between = { x: secondStart.x - firstStart.x, y: secondStart.y - firstStart.y };
+    const denominator = cross(firstVector, secondVector);
+
+    if (denominator === 0) return false;
+
+    const firstProgress = cross(between, secondVector) / denominator;
+    const secondProgress = cross(between, firstVector) / denominator;
+    return firstProgress >= 0 && firstProgress <= 1 && secondProgress >= 0 && secondProgress <= 1;
+};
+
+const distanceBetweenSegments = (firstStart, firstEnd, secondStart, secondEnd) => {
+    if (segmentsIntersect(firstStart, firstEnd, secondStart, secondEnd)) return 0;
+
+    return Math.min(
+        distanceToSegment(firstStart, secondStart, secondEnd),
+        distanceToSegment(firstEnd, secondStart, secondEnd),
+        distanceToSegment(secondStart, firstStart, firstEnd),
+        distanceToSegment(secondEnd, firstStart, firstEnd)
+    );
+};
+
+const getSaberSegment = (position, angle) => {
+    const halfLength = 70;
+    const direction = { x: Math.cos(angle), y: Math.sin(angle) };
+
+    return {
+        start: {
+            x: position.x - direction.x * halfLength,
+            y: position.y - direction.y * halfLength,
+        },
+        end: {
+            x: position.x + direction.x * halfLength,
+            y: position.y + direction.y * halfLength,
+        },
+    };
+};
+
+// Interpolates between two angles along the shortest rotational path,
+// so a swing that crosses the -PI/PI wrap point still interpolates smoothly.
+const lerpAngle = (fromAngle, toAngle, t) => {
+    const twoPi = Math.PI * 2;
+    let delta = (toAngle - fromAngle) % twoPi;
+    if (delta > Math.PI) delta -= twoPi;
+    if (delta < -Math.PI) delta += twoPi;
+    return fromAngle + delta * t;
+};
+
+const SABER_SWEEP_SUBSTEPS = 6;
+
 
 export default function GameEnv() {
     const players = usePlayersList();
@@ -34,6 +100,7 @@ export default function GameEnv() {
     const runnerRef = useRef(null);
     const bodiesRef = useRef({}); 
     const saberBodiesRef = useRef({});
+    const previousSaberStatesRef = useRef({});
     
     const projectilesRef = useRef([]); 
     const explosionsRef = useRef([]); // NEW: Tracks explosion coordinates
@@ -268,9 +335,37 @@ export default function GameEnv() {
                     Body.setPosition(nextSaberBody, saberPosition);
                     Body.setAngle(nextSaberBody, saberState.angle);
 
-                    Query.collides(nextSaberBody, playerBodies).forEach((collision) => {
-                        const playerBody = collision.bodyA.label === 'Player' ? collision.bodyA : collision.bodyB;
-                        if (playerBody.label !== 'Player') return;
+                    const previousSaberState = previousSaberStatesRef.current[p.id] || saberState;
+                    const queryCollisions = new Set(
+                        Query.collides(nextSaberBody, playerBodies)
+                            .map((collision) => collision.bodyA.label === 'Player' ? collision.bodyA : collision.bodyB)
+                            .filter((playerBody) => playerBody.label === 'Player')
+                    );
+
+                    // Build a series of blade segments interpolated between last tick's
+                    // saber pose and this tick's pose. Without this, a fast swing only
+                    // gets tested at its start and end pose, and can rotate/translate
+                    // straight through a player in between without ever registering a hit.
+                    const sweptSaberSegments = [];
+                    for (let step = 0; step <= SABER_SWEEP_SUBSTEPS; step++) {
+                        const t = step / SABER_SWEEP_SUBSTEPS;
+                        const interpolatedPosition = {
+                            x: previousSaberState.x + (saberPosition.x - previousSaberState.x) * t,
+                            y: previousSaberState.y + (saberPosition.y - previousSaberState.y) * t
+                        };
+                        const interpolatedAngle = lerpAngle(previousSaberState.angle, saberState.angle, t);
+                        sweptSaberSegments.push(getSaberSegment(interpolatedPosition, interpolatedAngle));
+                    }
+
+                    playerBodies.forEach((playerBody) => {
+                        const playerMovementStart = playerBody.positionPrev || playerBody.position;
+                        const playerMovementEnd = playerBody.position;
+                        const saberCollision = queryCollisions.has(playerBody)
+                            || sweptSaberSegments.some((segment) =>
+                                distanceBetweenSegments(playerMovementStart, playerMovementEnd, segment.start, segment.end) <= 32
+                            );
+
+                        if (!saberCollision) return;
 
                         const dx = playerBody.position.x - saberPosition.x;
                         const dy = playerBody.position.y - saberPosition.y;
@@ -291,9 +386,11 @@ export default function GameEnv() {
                             y: reflectedVelocity.y + normal.y * push
                         });
                     });
+                    previousSaberStatesRef.current[p.id] = saberState;
                 } else if (saberBody) {
                     Composite.remove(engine.world, saberBody);
                     delete saberBodiesRef.current[p.id];
+                    delete previousSaberStatesRef.current[p.id];
                 }
                 
             });
