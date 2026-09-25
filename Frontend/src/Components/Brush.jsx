@@ -16,8 +16,8 @@ export default function Brush({ player, color, worldRef, WORLD_W, WORLD_H, scale
         lastSaberSentAt.current = now;
         const currentSaber = player.getState('saber');
         const rect = worldRef.current.getBoundingClientRect()
-        const WorldX = (e.clientX - rect.left) / scale
-        const WorldY = (e.clientY - rect.top) / scale
+        const WorldX = (e.clientX - rect.left) * (WORLD_W / rect.width);
+        const WorldY = (e.clientY - rect.top) * (WORLD_H / rect.height);
 
         const angle = currentSaber?.angle ?? Math.atan2(
             WorldY - WORLD_H / 2,
@@ -43,8 +43,8 @@ export default function Brush({ player, color, worldRef, WORLD_W, WORLD_H, scale
         <div
             onMouseMove={handleMouseMove}
             style={{ 
-                width: '100vw', 
-                height: '100vh', 
+                width: `${WORLD_W}px`, 
+                height: `${WORLD_H}px`, 
                 position: 'absolute', 
                 top: 0, 
                 left: 0, 
