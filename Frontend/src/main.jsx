@@ -7,7 +7,6 @@ import App from './App.jsx'
 import ChoiceOfPlay from './Modules/ChoiceOfPlay.jsx';
 import GameEnv from './Modules/GameEnv.jsx'
 import HowToPlay from './Modules/HowToPlay.jsx';
-import Settings from './Modules/Settings.jsx';
 import ErrorHandler from './Components/ErrorHandler.jsx';
 
 const router = createBrowserRouter([
@@ -24,11 +23,6 @@ const router = createBrowserRouter([
   {
     path:'/how-to-play',
     element: <HowToPlay/>,
-    errorElement: <ErrorHandler />,
-  },
-  {
-    path:'/settings',
-    element: <Settings/>,
     errorElement: <ErrorHandler />,
   },
   {
